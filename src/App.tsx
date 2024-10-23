@@ -2,6 +2,25 @@ import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import { bresenham } from './functions/bresenham';
+import { lilhome } from './functions/lilhome';
+
+import { 
+  drawNormalCircle, 
+  drawParametricCircle, 
+  drawBresenhamCircle, 
+  drawSimetricCircle 
+} from './functions/pixelscircles';
+
+import {
+  drawLinearLine,
+  drawBresehamLine,
+  drawParametricLine
+} from './functions/pixelslines';
+
+import {
+  RGBtoHSL,
+  HSLtoRGB
+} from './functions/convertions';
 
 function App() { 
   const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
@@ -13,7 +32,6 @@ function App() {
 
   const handleSetTool = (tool: string) => {
     setTool(tool);
-    console.log(tool);
   }
 
   React.useEffect(() => {

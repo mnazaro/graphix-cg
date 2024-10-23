@@ -16,7 +16,7 @@ export const drawNormalCircle = (pointA: [number, number], pointB: [number, numb
 export const drawParametricCircle = (pointA: [number, number], pointB: [number, number]) => {
     let linepoints: [number, number][] = [];
     let radius = Math.sqrt(Math.pow(pointB[0] - pointA[0], 2) + Math.pow(pointB[1] - pointA[1], 2));
-    for (let theta = 0; theta <= 360; theta++) {
+    for (let theta = 0; theta <= 6.28; theta += 0.01) {
         let x = Math.round(radius * Math.cos(theta));
         let y = Math.round(radius * Math.sin(theta));
         linepoints.push([pointA[0] + x, pointA[1] + y]);
@@ -24,7 +24,7 @@ export const drawParametricCircle = (pointA: [number, number], pointB: [number, 
     return linepoints;
 }
 
-// MARK: - 3 da aula 7
+// MARK: - Bresenham
 export const drawBresenhamCircle = (pointA: [number, number], pointB: [number, number]) => {
     let linepoints: [number, number][] = [];
     let radius = Math.sqrt(Math.pow(pointB[0] - pointA[0], 2) + Math.pow(pointB[1] - pointA[1], 2));
@@ -55,5 +55,26 @@ export const drawBresenhamCircle = (pointA: [number, number], pointB: [number, n
         linepoints.push([pointA[0] - y, pointA[1] + x]);
         linepoints.push([pointA[0] - y, pointA[1] - x]);
     }
+    return linepoints;
+}
+
+// MARK: - Simetrico
+
+export const drawSimetricCircle = (pointA: [number, number], pointB: [number, number]) => {
+    let linepoints: [number, number][] = [];
+    let radius = Math.sqrt(Math.pow(pointB[0] - pointA[0], 2) + Math.pow(pointB[1] - pointA[1], 2));
+    let x = radius;
+    let y = 0;
+    let cos1 = Math.cos(1);
+    let sin1 = Math.sin(1);
+
+    for (let i = 1; i <= 360; i++) {
+        let x1 = Math.round(x * cos1 - y * sin1);
+        let y1 = Math.round(x * sin1 + y * cos1);
+        linepoints.push([pointA[0] + x1, pointA[1] + y1]);
+        x = x1;
+        y = y1;
+    }
+
     return linepoints;
 }
