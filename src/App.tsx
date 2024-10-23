@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import { bresenham } from './functions/bresenham';
+// import { bresenham } from './functions/bresenham';
 import { lilhome } from './functions/lilhome';
 
 import { 
@@ -51,57 +51,67 @@ function App() {
   const startDrawing = (event: React.MouseEvent) => {
    const { offsetX, offsetY } = event.nativeEvent;
    setPontoA([offsetX, offsetY]);
-   console.log(pontoA);
    setIsDrawing(true);
   };
-
-  // const draw = (event: React.MouseEvent) => {
-  //   if(isDrawing && context) {
-  //     const x = event.nativeEvent.offsetX;
-  //     const y = event.nativeEvent.offsetY;
-
-  //     switch(tool) {
-  //       case 'pen':
-  //         drawWithPen(context, x, y);
-  //         break;
-  //       case 'ellipse':
-  //         drawEllipse(context, x, y);
-  //         break;
-  //       case 'line':
-  //         //drawPixel(context, x, y);
-  //         break;
-  //       case 'eraser':
-  //         erase(context, x, y);
-  //         break;
-  //       default:
-  //         break;
-  //     }
-  //   }
-  // };
 
   const stopDrawing = (event: React.MouseEvent) => {
     if (isDrawing && context && pontoA) {
       const { offsetX, offsetY } = event.nativeEvent;
       const pontoB: [number, number] = [offsetX, offsetY];
-      console.log(pontoB);
       setIsDrawing(false);
 
       let linepoints: [number, number][] = [];
       switch(tool) {
-        case 'pen':
+        //MARK: - Linhas
+        case 'bresenhamLine':
           linepoints = drawBresehamLine(pontoA, pontoB);
-          console.log(linepoints);
-          break;
-        case 'ellipse':
-          drawBresenhamCircle(pontoA, pontoB).forEach(ponto => {
-            context.fillRect(ponto[0], ponto[1], 1, 1);
+          context.fillStyle = '#d3d3d3';
+          linepoints.forEach((point) => {
+            context.fillRect(point[0], point[1], 1, 1);
           });
           break;
-        case 'line':
-          drawLinearLine(pontoA, pontoB);
+        case 'parametricLine':
+          linepoints = drawParametricLine(pontoA, pontoB);
+          context.fillStyle = '#c245a4';
+          linepoints.forEach((point) => {
+            context.fillRect(point[0], point[1], 1, 1);
+          });
           break;
-        case 'eraser':
-          // erase(context, pontoB[0], pontoB[1]);
+        case 'normalLine':
+          linepoints = drawLinearLine(pontoA, pontoB);
+          context.fillStyle = '#f34a4a';  
+          linepoints.forEach((point) => {
+            context.fillRect(point[0], point[1], 1, 1);
+          });
+          break;
+        //MARK: - Circulos
+        case 'normalCircle':
+          linepoints = drawNormalCircle(pontoA, pontoB);
+          context.fillStyle = '#f34a4a';  
+          linepoints.forEach((point) => {
+            context.fillRect(point[0], point[1], 1, 1);
+          });
+          break;
+        case 'parametricCircle':
+          linepoints = drawParametricCircle(pontoA, pontoB);
+          context.fillStyle = '#f34a4a';  
+          linepoints.forEach((point) => {
+            context.fillRect(point[0], point[1], 1, 1);
+          });
+          break;
+        case 'bresenhamCircle':
+          linepoints = drawBresenhamCircle(pontoA, pontoB);
+          context.fillStyle = '#f34a4a';  
+          linepoints.forEach((point) => {
+            context.fillRect(point[0], point[1], 1, 1);
+          });
+          break;
+        case 'simetricCircle':
+          linepoints = drawSimetricCircle(pontoA, pontoB);
+          context.fillStyle = '#f34a4a';  
+          linepoints.forEach((point) => {
+            context.fillRect(point[0], point[1], 1, 1);
+          });
           break;
         default:
           break;
@@ -139,8 +149,13 @@ function App() {
               </span>
               {openMenuIndex === 1 && (
                 <ul className="submenu">
-                  <li onClick={() => handleSetTool('pen')}>Desenhar com Caneta</li>
-                  <li onClick={() => handleSetTool('ellipse')}>Desenhar Elipse</li>
+                  <li onClick={() => handleSetTool('bresenhamLine')}>Linha usando Bresenham</li>
+                  <li onClick={() => handleSetTool('parametricLine')}>Linha usando Paramétrica</li>
+                  <li onClick={() => handleSetTool('normalLine')}>Linha usando Equação Normal</li>
+                  <li onClick={() => handleSetTool('normalCircle')}>Círculo usando Equação Normal</li>
+                  <li onClick={() => handleSetTool('parametricCircle')}>Círculo usando Paramétrica</li>
+                  <li onClick={() => handleSetTool('bresenhamCircle')}>Círculo usando Bresenham</li>
+                  <li onClick={() => handleSetTool('simetricCircle')}>Círculo Simétrico</li>
                   <li onClick={() => handleSetTool('line')}>Desenhar Reta</li>
                   <li onClick={() => handleSetTool('eraser')}>Borracha</li>
                 </ul>
