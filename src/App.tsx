@@ -78,8 +78,16 @@ function App() {
   };
 
   const erase = (context: CanvasRenderingContext2D, x: number, y: number) => {
-    context.clearRect(x, y, 10, 10);
+    context.fillStyle = '#FFFFFF';
+    context.fillRect(x, y, context.lineWidth, context.lineWidth);
   };
+
+  const handleChangeSize = (value: number) => {
+    if(context) {
+      context.lineWidth += value;
+    }
+  }
+
 
   return (
     <> 
@@ -111,6 +119,8 @@ function App() {
                 </ul>
               )}
             </li>
+            <li className='plus-or-minus' onClick={() => handleChangeSize(1)}>+</li>
+            <li className='plus-or-minus' onClick={() => handleChangeSize(-1)}>-</li>
           </ul>
         </header>
         <div className='paintboard'>
