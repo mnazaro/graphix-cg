@@ -91,3 +91,8 @@
     margin-top: 2rem;
     border: 1px solid #ccc; /* Opcional: para visualizar os limites do canvas */
   }
+
+  .plus-or-minus {
+    font-size: 90rem;
+    width: 30px;
+  }
