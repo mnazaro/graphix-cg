@@ -11,13 +11,18 @@ function App() {
   const [isDrawing, setIsDrawing] = React.useState(false);
   const [context, setContext] = React.useState<CanvasRenderingContext2D | null>(null);
 
+  const handleSetTool = (tool: string) => {
+    setTool(tool);
+    console.log(tool);
+  }
+
   React.useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
         setContext(ctx);
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
     }
@@ -37,14 +42,14 @@ function App() {
       const y = event.nativeEvent.offsetY;
 
       switch(tool) {
-        case 'line':
-          drawLine(context, x, y);
+        case 'pen':
+          drawWithPen(context, x, y);
           break;
         case 'ellipse':
           drawEllipse(context, x, y);
           break;
-        case 'pixel':
-          drawPixel(context, x, y);
+        case 'line':
+          //drawPixel(context, x, y);
           break;
         case 'eraser':
           erase(context, x, y);
@@ -61,14 +66,15 @@ function App() {
       setIsDrawing(false);
     }
   };
-
+  
+  const drawWithPen = (context: CanvasRenderingContext2D, x: number, y: number) => {
+    context.lineTo(x, y);  // Continua a linha até a nova posição do mouse
+    context.stroke();      // Desenha a linha no canvas
+  };
+  
   const drawEllipse = (context: CanvasRenderingContext2D, x: number, y: number) => {
     context.ellipse(x, y, 50, 50, 0, 0, 2 * Math.PI);
     context.stroke();
-  };
-
-  const drawPixel = (context: CanvasRenderingContext2D, x: number, y: number) => {
-    context.fillRect(x, y, 1, 1);
   };
 
   const erase = (context: CanvasRenderingContext2D, x: number, y: number) => {
@@ -92,16 +98,16 @@ function App() {
                 </ul>
               )}
             </li>
-            <li onMouseLeave={() => setOpenMenuIndex(null)}>
+            <li >
               <span onClick={() => setOpenMenuIndex(openMenuIndex === 1 ? null : 1)}>
                 Operações
               </span>
               {openMenuIndex === 1 && (
                 <ul className="submenu">
-                  <li onClick={() => setTool('line')}>Desenhar Reta</li>
-                  <li onClick={() => setTool('ellipse')}>Desenhar Elipse</li>
-                  <li onClick={() => setTool('pixel')}>Desenhar Pixel</li>
-                  <li onClick={() => setTool('eraser')}>Borracha</li>
+                  <li onClick={() => handleSetTool('pen')}>Desenhar com Caneta</li>
+                  <li onClick={() => handleSetTool('ellipse')}>Desenhar Elipse</li>
+                  <li onClick={() => handleSetTool('line')}>Desenhar Reta</li>
+                  <li onClick={() => handleSetTool('eraser')}>Borracha</li>
                 </ul>
               )}
             </li>
