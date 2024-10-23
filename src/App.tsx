@@ -29,9 +29,11 @@ function App() {
 
   const [isDrawing, setIsDrawing] = React.useState(false);
   const [context, setContext] = React.useState<CanvasRenderingContext2D | null>(null);
+  const [pontoA, setPontoA] = React.useState<[number, number] | null>(null);
 
   const handleSetTool = (tool: string) => {
     setTool(tool);
+    console.log(tool);
   }
 
   React.useEffect(() => {
@@ -47,57 +49,64 @@ function App() {
   }, []);
 
   const startDrawing = (event: React.MouseEvent) => {
-    if(context) {
-      context.beginPath();
-      context.moveTo(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
-      setIsDrawing(true);
-    }
+   const { offsetX, offsetY } = event.nativeEvent;
+   setPontoA([offsetX, offsetY]);
+   console.log(pontoA);
+   setIsDrawing(true);
   };
 
-  const draw = (event: React.MouseEvent) => {
-    if(isDrawing && context) {
-      const x = event.nativeEvent.offsetX;
-      const y = event.nativeEvent.offsetY;
+  // const draw = (event: React.MouseEvent) => {
+  //   if(isDrawing && context) {
+  //     const x = event.nativeEvent.offsetX;
+  //     const y = event.nativeEvent.offsetY;
 
+  //     switch(tool) {
+  //       case 'pen':
+  //         drawWithPen(context, x, y);
+  //         break;
+  //       case 'ellipse':
+  //         drawEllipse(context, x, y);
+  //         break;
+  //       case 'line':
+  //         //drawPixel(context, x, y);
+  //         break;
+  //       case 'eraser':
+  //         erase(context, x, y);
+  //         break;
+  //       default:
+  //         break;
+  //     }
+  //   }
+  // };
+
+  const stopDrawing = (event: React.MouseEvent) => {
+    if (isDrawing && context && pontoA) {
+      const { offsetX, offsetY } = event.nativeEvent;
+      const pontoB: [number, number] = [offsetX, offsetY];
+      console.log(pontoB);
+      setIsDrawing(false);
+
+      let linepoints: [number, number][] = [];
       switch(tool) {
         case 'pen':
-          drawWithPen(context, x, y);
+          linepoints = drawBresehamLine(pontoA, pontoB);
+          console.log(linepoints);
           break;
         case 'ellipse':
-          drawEllipse(context, x, y);
+          drawBresenhamCircle(pontoA, pontoB).forEach(ponto => {
+            context.fillRect(ponto[0], ponto[1], 1, 1);
+          });
           break;
         case 'line':
-          //drawPixel(context, x, y);
+          drawLinearLine(pontoA, pontoB);
           break;
         case 'eraser':
-          erase(context, x, y);
+          // erase(context, pontoB[0], pontoB[1]);
           break;
         default:
           break;
       }
     }
-  };
-
-  const stopDrawing = () => {
-    if (isDrawing && context) {
-      context.closePath();
-      setIsDrawing(false);
-    }
-  };
-  
-  const drawWithPen = (context: CanvasRenderingContext2D, x: number, y: number) => {
-    context.lineTo(x, y);  // Continua a linha até a nova posição do mouse
-    context.stroke();      // Desenha a linha no canvas
-  };
-  
-  const drawEllipse = (context: CanvasRenderingContext2D, x: number, y: number) => {
-    context.ellipse(x, y, 50, 50, 0, 0, 2 * Math.PI);
-    context.stroke();
-  };
-
-  const erase = (context: CanvasRenderingContext2D, x: number, y: number) => {
-    context.fillStyle = '#FFFFFF';
-    context.fillRect(x, y, context.lineWidth, context.lineWidth);
   };
 
   const handleChangeSize = (value: number) => {
@@ -147,7 +156,6 @@ function App() {
                 width={800} 
                 height={600}
                 onMouseDown={startDrawing}
-                onMouseMove={draw}
                 onMouseUp={stopDrawing}
                 onMouseLeave={stopDrawing}
               ></canvas>
