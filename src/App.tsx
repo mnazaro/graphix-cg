@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import logo from './logo.svg';
 import './App.css';
 // import { bresenham } from './functions/bresenham';
@@ -18,9 +18,12 @@ import {
 } from './functions/pixelslines';
 
 import {
-  RGBtoHSL,
-  HSLtoRGB
+  rgbToHsl,
+  hslToRgb,
+  colorToHex,
 } from './functions/convertions';
+
+import { HslColorPicker, RgbColorPicker } from 'react-colorful';
 
 interface DrawnElement {
   type: string;
@@ -32,19 +35,16 @@ interface DrawnElement {
 function App() { 
   const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
   const [tool, setTool] = useState<string>('');
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
+  const [pontoA, setPontoA] = useState<[number, number] | null>(null);
+  const [drawnElements, setDrawnElements] = useState<DrawnElement[]>([]);
+  const [color, setColor] = useState<any>({ r: 0, g: 0, b: 0 });
+  const [colorMode, setColorMode] = useState<string>('rgb');
+  
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [isDrawing, setIsDrawing] = React.useState(false);
-  const [context, setContext] = React.useState<CanvasRenderingContext2D | null>(null);
-  const [pontoA, setPontoA] = React.useState<[number, number] | null>(null);
-  const [drawnElements, setDrawnElements] = React.useState<DrawnElement[]>([]);
-
-  const handleSetTool = (tool: string) => {
-    setTool(tool);
-    console.log(tool);
-  }
-
-  React.useEffect(() => {
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
@@ -55,6 +55,34 @@ function App() {
       }
     }
   }, []);
+  
+  useEffect(() => {
+    if (colorMode === 'hsl') {
+      const { r, g, b } = color;
+      console.log('color object: ', color);
+      const hslColor = rgbToHsl(r, g, b);
+      setColor(hslColor);
+      console.log('hsl color Array: ', hslColor);
+    } else {
+      const { h, s, l } = color;
+      console.log('color object: ', color);
+      const rgbColor = hslToRgb(h, s, l);
+      setColor(rgbColor);
+      console.log('rgb color Array: ', rgbColor);
+    }
+  }, [colorMode])
+
+  const handleSetTool = (tool: string) => {
+    setTool(tool);
+    console.log(tool);
+  }
+
+  const handleClear = () => {
+    if(context) {
+      context.fillStyle = '#FFFFFF';
+      context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+    }
+  }
 
   const startDrawing = (event: React.MouseEvent) => {
    const { offsetX, offsetY } = event.nativeEvent;
@@ -71,48 +99,44 @@ function App() {
       setIsDrawing(false);
 
       let linepoints: [number, number][] = [];
-      let color = '#000000';
       let ident = 0;
       switch(tool) {
         //MARK: - Linhas
         case 'bresenhamLine':
           linepoints = drawBresehamLine(pontoA, pontoB);
-          color = '#d3d3d3';
           break;
         case 'parametricLine':
           linepoints = drawParametricLine(pontoA, pontoB);
-          color = '#c245a4';
           break;
         case 'normalLine':
           linepoints = drawLinearLine(pontoA, pontoB);
-          color = '#f34a4a';
           break;
         //MARK: - Circulos
         case 'normalCircle':
           linepoints = drawNormalCircle(pontoA, pontoB);
-          color = '#f34a4a';
           break;
         case 'parametricCircle':
           linepoints = drawParametricCircle(pontoA, pontoB);
-          color = '#f34a4a';
           break;
         case 'bresenhamCircle':
           linepoints = drawBresenhamCircle(pontoA, pontoB);
-          color = '#f34a4a';
           break;
         case 'simetricCircle':
-          linepoints = drawSimetricCircle(pontoA, pontoB);
-          color = '#f34a4a';  
+          linepoints = drawSimetricCircle(pontoA, pontoB); 
           break;
         default:
           break;
       }
 
-      const newElement: DrawnElement = {type: tool, points: linepoints, color, id: ident};
+      let hexColor = colorToHex(color);
+
+      const newElement: DrawnElement = {type: tool, points: linepoints, color: hexColor, id: ident};
       setDrawnElements([...drawnElements, newElement]);
       ident += 1;
 
-      context.fillStyle = color;
+      context.fillStyle = hexColor;
+      context.strokeStyle = hexColor;
+      console.log('context: ', context);
       plotPoints(context, linepoints);
     }
   };
@@ -184,6 +208,7 @@ function App() {
             <li className='plus-or-minus' onClick={() => handleChangeSize(1)}>+</li>
             <li className='current-size'>{context?.lineWidth}</li>
             <li className='plus-or-minus' onClick={() => handleChangeSize(-1)}>-</li>
+            <li className='plus-or-minus' onClick={() => handleClear()}>Clear</li>
           </ul>
         </header>
         <div className='paintboard'>
@@ -195,6 +220,15 @@ function App() {
                 onMouseUp={stopDrawing}
                 onMouseLeave={stopDrawing}
               ></canvas>
+              <div>
+                <button onClick={() => setColorMode('rgb')}>RGB</button>
+                <button onClick={() => setColorMode('hsl')}>HSL</button>
+                {colorMode === 'hsl' ? (
+                  <HslColorPicker color={color} onChange={(newColor) => setColor(newColor)} />
+                ) : (
+                  <RgbColorPicker color={color} onChange={(newColor) => setColor(newColor)} />
+                )}
+              </div>
         </div>
       </div>
     </>
