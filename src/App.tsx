@@ -56,21 +56,25 @@ function App() {
     }
   }, []);
   
-  useEffect(() => {
-    if (colorMode === 'hsl') {
-      const { r, g, b } = color;
-      console.log('color object: ', color);
-      const hslColor = rgbToHsl(r, g, b);
-      setColor(hslColor);
-      console.log('hsl color Array: ', hslColor);
-    } else {
-      const { h, s, l } = color;
-      console.log('color object: ', color);
-      const rgbColor = hslToRgb(h, s, l);
-      setColor(rgbColor);
-      console.log('rgb color Array: ', rgbColor);
-    }
-  }, [colorMode])
+  // Problema: Estado inicial começa com RGB, e o código tenta extrair HSL de um objeto RGB
+  // Quero que 
+
+  // useEffect(() => {
+  //   console.log('colormode: ', colorMode)
+  //   if (colorMode === 'hsl') {
+  //     const { r, g, b } = color;
+  //     console.log('color object hsl: ', color);
+  //     const hslColor = rgbToHsl(r, g, b);
+  //     setColor(hslColor);
+  //     console.log('hsl color Array: ', hslColor);
+  //   } else {
+  //     const { h, s, l } = color;
+  //     console.log('color object rgb: ', color);
+  //     const rgbColor = hslToRgb(h, s, l);
+  //     setColor(rgbColor);
+  //     console.log('rgb color Array: ', rgbColor);
+  //   }
+  // }, [colorMode])
 
   const handleSetTool = (tool: string) => {
     setTool(tool);
@@ -124,6 +128,10 @@ function App() {
         case 'simetricCircle':
           linepoints = drawSimetricCircle(pontoA, pontoB); 
           break;
+        case 'eraser':
+          context.fillStyle = '#FFFFFF';
+          context.fillRect(pontoA[0], pontoA[1], context.lineWidth, context.lineWidth);
+          return;
         default:
           break;
       }
@@ -136,7 +144,6 @@ function App() {
 
       context.fillStyle = hexColor;
       context.strokeStyle = hexColor;
-      console.log('context: ', context);
       plotPoints(context, linepoints);
     }
   };
@@ -144,7 +151,7 @@ function App() {
   const plotPoints = (context: CanvasRenderingContext2D, points: [number, number][]) => {
     context.beginPath();
     points.forEach(([x, y]) => {
-      context.fillRect(x, y, 1, 1);
+      context.fillRect(x, y, context.lineWidth, context.lineWidth);
     });
     context.closePath();
   };
@@ -152,23 +159,28 @@ function App() {
   const handleChangeSize = (value: number) => {
     if(context) {
       context.lineWidth += value;
+      console.log('linewidth: ', context.lineWidth);
     }
   }
 
-  // const handleCanvasClick = (event: React.MouseEvent) => {
-  //   const { offsetX, offsetY } = event.nativeEvent;
-  //   console.log(offsetX, offsetY);
-  //   const clickedPoint: [number, number] = [offsetX, offsetY];
-
-  //   drawnElements.forEach((element) => {
-  //     element.points.forEach((point) => {
-  //       if (Math.abs(point[0] - clickedPoint[0]) <= 5 && Math.abs(point[1] - clickedPoint[1]) <= 5) {
-  //         console.log('Elemento clicado:', element);
-  //       }
-  //     });
-  //   });
-  // }
-
+  const handleColorModeChange = (mode: string) => {
+    setColorMode(mode);
+    console.log('colormode: ', colorMode)
+    console.log('mode: ', mode)
+    if (mode === 'hsl') {
+      const { r, g, b } = color;
+      console.log('color object hsl: ', color);
+      const hslColor = rgbToHsl(r, g, b);
+      setColor(hslColor);
+      console.log('hsl color Array: ', hslColor);
+    } else {
+      const { h, s, l } = color;
+      console.log('color object rgb: ', color);
+      const rgbColor = hslToRgb(h, s, l);
+      setColor(rgbColor);
+      console.log('rgb color Array: ', rgbColor);
+    }
+  }
 
   return (
     <> 
@@ -220,14 +232,82 @@ function App() {
                 onMouseUp={stopDrawing}
                 onMouseLeave={stopDrawing}
               ></canvas>
-              <div>
-                <button onClick={() => setColorMode('rgb')}>RGB</button>
-                <button onClick={() => setColorMode('hsl')}>HSL</button>
-                {colorMode === 'hsl' ? (
-                  <HslColorPicker color={color} onChange={(newColor) => setColor(newColor)} />
-                ) : (
-                  <RgbColorPicker color={color} onChange={(newColor) => setColor(newColor)} />
-                )}
+                <div>
+                <button 
+                  onClick={() => handleColorModeChange('rgb')}
+                  disabled={colorMode === 'rgb'}
+                >
+                  RGB
+                </button>
+                <button
+                  onClick={() => handleColorModeChange('hsl')}
+                  disabled={colorMode === 'hsl'}
+                >
+                  HSL
+                </button>
+                <div className='color-picker'>
+                  {colorMode === 'hsl' ? (
+                    <>
+                      <HslColorPicker color={color} onChange={(newColor) => setColor(newColor)} />
+                      <div className='color-input-container'>
+                        <label>
+                        H:
+                        <input
+                          type="number"
+                          value={color.h}
+                          onChange={(e) => setColor({ ...color, h: Number(e.target.value) })}
+                        />
+                        </label>
+                        <label>
+                        S:
+                        <input
+                          type="number"
+                          value={color.s}
+                          onChange={(e) => setColor({ ...color, s: Number(e.target.value) })}
+                        />
+                        </label>
+                        <label>
+                        L:
+                        <input
+                          type="number"
+                          value={color.l}
+                          onChange={(e) => setColor({ ...color, l: Number(e.target.value) })}
+                        />
+                        </label>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <RgbColorPicker color={color} onChange={(newColor) => setColor(newColor)} />
+                      <div className='color-input-container'>
+                        <label>
+                        R:
+                        <input
+                          type="number"
+                          value={color.r}
+                          onChange={(e) => setColor({ ...color, r: Number(e.target.value) })}
+                        />
+                        </label>
+                        <label>
+                        G:
+                        <input
+                          type="number"
+                          value={color.g}
+                          onChange={(e) => setColor({ ...color, g: Number(e.target.value) })}
+                        />
+                        </label>
+                        <label>
+                        B:
+                        <input
+                          type="number"
+                          value={color.b}
+                          onChange={(e) => setColor({ ...color, b: Number(e.target.value) })}
+                        />
+                        </label>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
         </div>
       </div>
