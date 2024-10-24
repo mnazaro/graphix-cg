@@ -41,7 +41,9 @@ function App() {
   const [drawnElements, setDrawnElements] = useState<DrawnElement[]>([]);
   const [color, setColor] = useState<any>({ r: 0, g: 0, b: 0 });
   const [colorMode, setColorMode] = useState<string>('rgb');
-  
+  const [lineWidth, setLineWidth] = useState(1);
+  const [, setForceRender] = useState(0); 
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -56,6 +58,27 @@ function App() {
     }
   }, []);
   
+  useEffect(() => {
+    if (context) {
+      context.lineWidth = lineWidth;
+    }
+  }, [lineWidth, context]);
+
+  const increaseLineWidth = () => {
+    if (context) {
+      context.lineWidth += 1; // Aumenta o valor de lineWidth
+      setForceRender(prev => prev + 1); // Força re-renderização
+      console.log('linewidth: ', context.lineWidth);
+    }
+  };
+
+  const decreaseLineWidth = () => {
+    if (context && context.lineWidth > 1) {
+      context.lineWidth -= 1; // Diminui o valor de lineWidth
+      setForceRender(prev => prev + 1); // Força re-renderização
+      console.log('linewidth: ', context.lineWidth);
+    }
+  };
   // Problema: Estado inicial começa com RGB, e o código tenta extrair HSL de um objeto RGB
   // Quero que 
 
@@ -89,62 +112,71 @@ function App() {
   }
 
   const startDrawing = (event: React.MouseEvent) => {
-   const { offsetX, offsetY } = event.nativeEvent;
-   setPontoA([offsetX, offsetY]);
-  //  console.log(pontoA);
-   setIsDrawing(true);
+    const { offsetX, offsetY } = event.nativeEvent;
+    setPontoA([offsetX, offsetY]);
+    setIsDrawing(true);
+
+    if (context && tool === 'eraser') {
+      context.fillStyle = '#FFFFFF';
+      context.fillRect(offsetX, offsetY, context.lineWidth, context.lineWidth);
+    }
+  };
+
+  const drawWhileMoving = (event: React.MouseEvent) => {
+    if (!isDrawing || !context) return;
+  
+    const { offsetX, offsetY } = event.nativeEvent;
+  
+    if (tool === 'eraser') {
+      context.fillStyle = '#FFFFFF';
+      context.fillRect(offsetX, offsetY, context.lineWidth, context.lineWidth);
+    }
   };
 
   const stopDrawing = (event: React.MouseEvent) => {
     if (isDrawing && context && pontoA) {
       const { offsetX, offsetY } = event.nativeEvent;
       const pontoB: [number, number] = [offsetX, offsetY];
-      // console.log(pontoB);
       setIsDrawing(false);
-
-      let linepoints: [number, number][] = [];
-      let ident = 0;
-      switch(tool) {
-        //MARK: - Linhas
-        case 'bresenhamLine':
-          linepoints = drawBresehamLine(pontoA, pontoB);
-          break;
-        case 'parametricLine':
-          linepoints = drawParametricLine(pontoA, pontoB);
-          break;
-        case 'normalLine':
-          linepoints = drawLinearLine(pontoA, pontoB);
-          break;
-        //MARK: - Circulos
-        case 'normalCircle':
-          linepoints = drawNormalCircle(pontoA, pontoB);
-          break;
-        case 'parametricCircle':
-          linepoints = drawParametricCircle(pontoA, pontoB);
-          break;
-        case 'bresenhamCircle':
-          linepoints = drawBresenhamCircle(pontoA, pontoB);
-          break;
-        case 'simetricCircle':
-          linepoints = drawSimetricCircle(pontoA, pontoB); 
-          break;
-        case 'eraser':
-          context.fillStyle = '#FFFFFF';
-          context.fillRect(pontoA[0], pontoA[1], context.lineWidth, context.lineWidth);
-          return;
-        default:
-          break;
+  
+      if (tool !== 'eraser') {
+        let linepoints: [number, number][] = [];
+        let ident = 0;
+        switch (tool) {
+          case 'bresenhamLine':
+            linepoints = drawBresehamLine(pontoA, pontoB);
+            break;
+          case 'parametricLine':
+            linepoints = drawParametricLine(pontoA, pontoB);
+            break;
+          case 'normalLine':
+            linepoints = drawLinearLine(pontoA, pontoB);
+            break;
+          case 'normalCircle':
+            linepoints = drawNormalCircle(pontoA, pontoB);
+            break;
+          case 'parametricCircle':
+            linepoints = drawParametricCircle(pontoA, pontoB);
+            break;
+          case 'bresenhamCircle':
+            linepoints = drawBresenhamCircle(pontoA, pontoB);
+            break;
+          case 'simetricCircle':
+            linepoints = drawSimetricCircle(pontoA, pontoB);
+            break;
+          default:
+            break;
+        }
+  
+        const hexColor = colorToHex(color);
+        const newElement: DrawnElement = { type: tool, points: linepoints, color: hexColor, id: ident };
+        setDrawnElements([...drawnElements, newElement]);
+        ident += 1;
+  
+        context.fillStyle = hexColor;
+        context.strokeStyle = hexColor;
+        plotPoints(context, linepoints);
       }
-
-      let hexColor = colorToHex(color);
-
-      const newElement: DrawnElement = {type: tool, points: linepoints, color: hexColor, id: ident};
-      setDrawnElements([...drawnElements, newElement]);
-      ident += 1;
-
-      context.fillStyle = hexColor;
-      context.strokeStyle = hexColor;
-      plotPoints(context, linepoints);
     }
   };
 
@@ -155,13 +187,6 @@ function App() {
     });
     context.closePath();
   };
-
-  const handleChangeSize = (value: number) => {
-    if(context) {
-      context.lineWidth += value;
-      console.log('linewidth: ', context.lineWidth);
-    }
-  }
 
   const handleColorModeChange = (mode: string) => {
     setColorMode(mode);
@@ -217,10 +242,10 @@ function App() {
                 </ul>
               )}
             </li>
-            <li className='plus-or-minus' onClick={() => handleChangeSize(1)}>+</li>
+            <li className='plus-or-minus' onClick={increaseLineWidth}>+</li>
             <li className='current-size'>{context?.lineWidth}</li>
-            <li className='plus-or-minus' onClick={() => handleChangeSize(-1)}>-</li>
-            <li className='plus-or-minus' onClick={() => handleClear()}>Clear</li>
+            <li className='plus-or-minus' onClick={decreaseLineWidth}>-</li>
+            <li className='plus-or-minus' onClick={handleClear}>Clear</li>
           </ul>
         </header>
         <div className='paintboard'>
@@ -231,6 +256,7 @@ function App() {
                 onMouseDown={startDrawing}
                 onMouseUp={stopDrawing}
                 onMouseLeave={stopDrawing}
+                onMouseMove={drawWhileMoving}
               ></canvas>
                 <div>
                 <button 
@@ -249,13 +275,16 @@ function App() {
                   {colorMode === 'hsl' ? (
                     <>
                       <HslColorPicker color={color} onChange={(newColor) => setColor(newColor)} />
-                      <div className='color-input-container'>
+                        <div className='color-input-container'>
                         <label>
                         H:
                         <input
                           type="number"
                           value={color.h}
-                          onChange={(e) => setColor({ ...color, h: Number(e.target.value) })}
+                          onChange={(e) => {
+                            const value = Math.max(0, Math.min(360, Number(e.target.value)));
+                            setColor({ ...color, h: value });
+                          }}
                         />
                         </label>
                         <label>
@@ -263,7 +292,10 @@ function App() {
                         <input
                           type="number"
                           value={color.s}
-                          onChange={(e) => setColor({ ...color, s: Number(e.target.value) })}
+                          onChange={(e) => {
+                            const value = Math.max(0, Math.min(100, Number(e.target.value)));
+                            setColor({ ...color, s: value });
+                          }}
                         />
                         </label>
                         <label>
@@ -271,10 +303,13 @@ function App() {
                         <input
                           type="number"
                           value={color.l}
-                          onChange={(e) => setColor({ ...color, l: Number(e.target.value) })}
+                          onChange={(e) => {
+                            const value = Math.max(0, Math.min(100, Number(e.target.value)));
+                            setColor({ ...color, l: value });
+                          }}
                         />
                         </label>
-                      </div>
+                        </div>
                     </>
                   ) : (
                     <>
@@ -285,7 +320,10 @@ function App() {
                         <input
                           type="number"
                           value={color.r}
-                          onChange={(e) => setColor({ ...color, r: Number(e.target.value) })}
+                          onChange={(e) => {
+                            const value = Math.max(0, Math.min(255, Number(e.target.value)));
+                            setColor({ ...color, r: value });
+                          }}
                         />
                         </label>
                         <label>
@@ -293,7 +331,10 @@ function App() {
                         <input
                           type="number"
                           value={color.g}
-                          onChange={(e) => setColor({ ...color, g: Number(e.target.value) })}
+                          onChange={(e) => {
+                            const value = Math.max(0, Math.min(255, Number(e.target.value)));
+                            setColor({ ...color, g: value });
+                          }}
                         />
                         </label>
                         <label>
@@ -301,7 +342,10 @@ function App() {
                         <input
                           type="number"
                           value={color.b}
-                          onChange={(e) => setColor({ ...color, b: Number(e.target.value) })}
+                          onChange={(e) => {
+                            const value = Math.max(0, Math.min(255, Number(e.target.value)));
+                            setColor({ ...color, b: value });
+                          }}
                         />
                         </label>
                       </div>

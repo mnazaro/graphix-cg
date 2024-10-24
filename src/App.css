@@ -123,3 +123,8 @@
     align-items: center;
     gap: 10px;
   }
+
+  *::selection {
+    background-color: transparent; /* Remove o fundo */
+    color: inherit; /* Mantém a cor original do texto */
+  }
