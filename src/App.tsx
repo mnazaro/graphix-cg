@@ -22,6 +22,13 @@ import {
   HSLtoRGB
 } from './functions/convertions';
 
+interface DrawnElement {
+  type: string;
+  points: [number, number][];
+  color: string;
+  id: number;
+}
+
 function App() { 
   const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
   const [tool, setTool] = useState<string>('');
@@ -30,6 +37,7 @@ function App() {
   const [isDrawing, setIsDrawing] = React.useState(false);
   const [context, setContext] = React.useState<CanvasRenderingContext2D | null>(null);
   const [pontoA, setPontoA] = React.useState<[number, number] | null>(null);
+  const [drawnElements, setDrawnElements] = React.useState<DrawnElement[]>([]);
 
   const handleSetTool = (tool: string) => {
     setTool(tool);
@@ -51,6 +59,7 @@ function App() {
   const startDrawing = (event: React.MouseEvent) => {
    const { offsetX, offsetY } = event.nativeEvent;
    setPontoA([offsetX, offsetY]);
+  //  console.log(pontoA);
    setIsDrawing(true);
   };
 
@@ -58,65 +67,62 @@ function App() {
     if (isDrawing && context && pontoA) {
       const { offsetX, offsetY } = event.nativeEvent;
       const pontoB: [number, number] = [offsetX, offsetY];
+      // console.log(pontoB);
       setIsDrawing(false);
 
       let linepoints: [number, number][] = [];
+      let color = '#000000';
+      let ident = 0;
       switch(tool) {
         //MARK: - Linhas
         case 'bresenhamLine':
           linepoints = drawBresehamLine(pontoA, pontoB);
-          context.fillStyle = '#d3d3d3';
-          linepoints.forEach((point) => {
-            context.fillRect(point[0], point[1], 1, 1);
-          });
+          color = '#d3d3d3';
           break;
         case 'parametricLine':
           linepoints = drawParametricLine(pontoA, pontoB);
-          context.fillStyle = '#c245a4';
-          linepoints.forEach((point) => {
-            context.fillRect(point[0], point[1], 1, 1);
-          });
+          color = '#c245a4';
           break;
         case 'normalLine':
           linepoints = drawLinearLine(pontoA, pontoB);
-          context.fillStyle = '#f34a4a';  
-          linepoints.forEach((point) => {
-            context.fillRect(point[0], point[1], 1, 1);
-          });
+          color = '#f34a4a';
           break;
         //MARK: - Circulos
         case 'normalCircle':
           linepoints = drawNormalCircle(pontoA, pontoB);
-          context.fillStyle = '#f34a4a';  
-          linepoints.forEach((point) => {
-            context.fillRect(point[0], point[1], 1, 1);
-          });
+          color = '#f34a4a';
           break;
         case 'parametricCircle':
           linepoints = drawParametricCircle(pontoA, pontoB);
-          context.fillStyle = '#f34a4a';  
-          linepoints.forEach((point) => {
-            context.fillRect(point[0], point[1], 1, 1);
-          });
+          color = '#f34a4a';
           break;
         case 'bresenhamCircle':
           linepoints = drawBresenhamCircle(pontoA, pontoB);
-          context.fillStyle = '#f34a4a';  
-          linepoints.forEach((point) => {
-            context.fillRect(point[0], point[1], 1, 1);
-          });
+          color = '#f34a4a';
           break;
         case 'simetricCircle':
           linepoints = drawSimetricCircle(pontoA, pontoB);
-          context.fillStyle = '#f34a4a';  
-          linepoints.forEach((point) => {
-            context.fillRect(point[0], point[1], 1, 1);
-          });
+          color = '#f34a4a';  
           break;
         default:
           break;
       }
+
+      const newElement: DrawnElement = {type: tool, points: linepoints, color, id: ident};
+      setDrawnElements([...drawnElements, newElement]);
+      ident += 1;
+
+      context.fillStyle = color;
+      plotPoints(context, linepoints);
     }
+  };
+
+  const plotPoints = (context: CanvasRenderingContext2D, points: [number, number][]) => {
+    context.beginPath();
+    points.forEach(([x, y]) => {
+      context.fillRect(x, y, 1, 1);
+    });
+    context.closePath();
   };
 
   const handleChangeSize = (value: number) => {
@@ -124,6 +130,20 @@ function App() {
       context.lineWidth += value;
     }
   }
+
+  // const handleCanvasClick = (event: React.MouseEvent) => {
+  //   const { offsetX, offsetY } = event.nativeEvent;
+  //   console.log(offsetX, offsetY);
+  //   const clickedPoint: [number, number] = [offsetX, offsetY];
+
+  //   drawnElements.forEach((element) => {
+  //     element.points.forEach((point) => {
+  //       if (Math.abs(point[0] - clickedPoint[0]) <= 5 && Math.abs(point[1] - clickedPoint[1]) <= 5) {
+  //         console.log('Elemento clicado:', element);
+  //       }
+  //     });
+  //   });
+  // }
 
 
   return (
@@ -162,6 +182,7 @@ function App() {
               )}
             </li>
             <li className='plus-or-minus' onClick={() => handleChangeSize(1)}>+</li>
+            <li className='current-size'>{context?.lineWidth}</li>
             <li className='plus-or-minus' onClick={() => handleChangeSize(-1)}>-</li>
           </ul>
         </header>
