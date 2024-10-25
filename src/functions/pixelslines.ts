@@ -4,51 +4,60 @@ import React from 'react';
 export const drawLinearLine = (pointA: [number, number], pointB: [number, number]) => {
     let [x0, y0] = pointA;
     let [x1, y1] = pointB;
-    const dx = Math.abs(x1 - x0);
-    const dy = Math.abs(y1 - y0);
-    const sx = x0 < x1 ? 1 : -1;
-    const sy = y0 < y1 ? 1 : -1;
-    let err = dx - dy;
     let linepoints: [number, number][] = [];
 
+    // Cálculo das diferenças
+    const dx = Math.abs(x1 - x0);
+    const dy = Math.abs(y1 - y0);
+
+    // Verificação para garantir que o ponto de início seja o correto
+    const sx = x0 < x1 ? 1 : -1;
+    const sy = y0 < y1 ? 1 : -1;
+
     if (x0 === x1) {
-        for (let y = y0; y !== y1; y += sy) {
+        // Linha vertical
+        for (let y = y0; y !== y1 + sy; y += sy) {
             linepoints.push([x0, y]);
         }
         return linepoints;
     }
 
     if (y0 === y1) {
-        for (let x = x0; x !== x1; x += sx) {
+        // Linha horizontal
+        for (let x = x0; x !== x1 + sx; x += sx) {
             linepoints.push([x, y0]);
         }
         return linepoints;
     }
 
-    let coeficient = dy / dx;
+    const m = (y1 - y0) / (x1 - x0); // Cálculo da inclinação
 
-    if (dy > dx) {
-        if( x0 > x1){
+    // Desenho da linha dependendo do ângulo
+    if (dx > dy) {
+        // Linhas mais horizontais (∆x > ∆y)
+        if (x0 > x1) {
             [x0, x1] = [x1, x0];
             [y0, y1] = [y1, y0];
         }
-        for (let x = x0; x !== x1; x += sx) {
-            let y = Math.round(y0 + coeficient * (x - x0));
+        for (let x = x0; x <= x1; x++) {
+            let y = Math.round(m * (x - x0) + y0);
             linepoints.push([x, y]);
         }
     } else {
-        if( y0 > y1){
+        // Linhas mais verticais (∆y > ∆x)
+        if (y0 > y1) {
             [x0, x1] = [x1, x0];
             [y0, y1] = [y1, y0];
         }
-        for (let y = y0; y !== y1; y += sy) {
-            let x = Math.round(x0 + (y - y0) / coeficient);
+        for (let y = y0; y <= y1; y++) {
+            let x = Math.round((y - y0) / m + x0);
             linepoints.push([x, y]);
         }
     }
 
     return linepoints;
 }
+
 
 // MARK: - BRESENHAM
 export const drawLowLine = (pointA: [number, number], pointB: [number, number]) => {
@@ -120,23 +129,44 @@ export const drawHighLine = (pointA: [number, number], pointB: [number, number])
 }
 
 
-export const drawBresehamLine = (pointA: [number, number], pointB: [number, number]) => {
+export const drawBresenhamLine = (pointA: [number, number], pointB: [number, number]) => {
     let [x0, y0] = pointA;
     let [x1, y1] = pointB;
-    
-    if (Math.abs(y1 - y0) < Math.abs(x1 - x0)) {
-        if (x0 > x1) {
-            return drawLowLine(pointB, pointA);
-        } else {
-            return drawLowLine(pointA, pointB);
+    let linepoints: [number, number][] = [];
+
+    // Diferenças absolutas
+    const dx = Math.abs(x1 - x0);
+    const dy = Math.abs(y1 - y0);
+
+    // Direções de incremento
+    const sx = x0 < x1 ? 1 : -1;
+    const sy = y0 < y1 ? 1 : -1;
+
+    // Definição da variável de decisão
+    let err = dx - dy;
+
+    while (true) {
+        linepoints.push([x0, y0]); // Adiciona o ponto atual
+
+        // Verifica se chegou ao fim
+        if (x0 === x1 && y0 === y1) break;
+
+        const e2 = 2 * err;
+
+        // Verifica se deve mover no eixo X
+        if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
         }
-    } else {
-        if (y0 > y1) {
-            return drawHighLine(pointB, pointA);
-        } else {
-            return drawHighLine(pointA, pointB);
+
+        // Verifica se deve mover no eixo Y
+        if (e2 < dx) {
+            err += dx;
+            y0 += sy;
         }
     }
+
+    return linepoints;
 }
 
 // MARK: - EQ. PARAMÉTRICA

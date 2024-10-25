@@ -22,7 +22,7 @@ import {
 
 import {
   drawLinearLine,
-  drawBresehamLine,
+  drawBresenhamLine,
   drawParametricLine
 } from './functions/pixelslines';
 
@@ -31,6 +31,10 @@ import {
   hslToRgb,
   colorToHex,
 } from './functions/convertions';
+
+import { projectPoint } from './functions/projections';
+
+import { scale, translate, rotate, shear } from './functions/transformations';
 
 import { HslColorPicker, RgbColorPicker } from 'react-colorful';
 
@@ -53,24 +57,47 @@ function App() {
   const [lineWidth, setLineWidth] = useState(1);
   const [, setForceRender] = useState(0); 
 
+  const [formData, setFormData] = useState({
+    scaleType: 'local',
+    sx: 1,
+    sy: 1,
+    sz: 1,
+    s: 1,
+    translateType: false,
+    tx: 0,
+    ty: 0,
+    tz: 0,
+    rotateType: 'origem',
+    axis: 'x',
+    angle: 0,
+    shearMatrix: [
+      [1, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, 1, 0],
+      [0, 0, 0, 1]
+    ]
+  });
+
   const [openModal, setOpenModal] = useState<boolean>(false);
-  const [shearMatrix, setShearMatrix] = useState([
-    [1, 0, 0, 0],
-    [0, 1, 0, 0],
-    [0, 0, 1, 0],
-    [0, 0, 0, 1]
-  ])
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasPreviewRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    const previewCanvas = canvasPreviewRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
         setContext(ctx);
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+    if (previewCanvas) {
+      const ctx = previewCanvas.getContext('2d');
+      if (ctx) {
+        drawHouse(ctx);
       }
     }
   }, []);
@@ -143,7 +170,7 @@ function App() {
         let ident = 0;
         switch (tool) {
           case 'bresenhamLine':
-            linepoints = drawBresehamLine(pontoA, pontoB);
+            linepoints = drawBresenhamLine(pontoA, pontoB);
             break;
           case 'parametricLine':
             linepoints = drawParametricLine(pontoA, pontoB);
@@ -193,25 +220,30 @@ function App() {
     }
   }
 
-  const handleMatrixChange = (row: number, col: number, value: string) => {
-    const newMatrix = [...shearMatrix];
-    newMatrix[row][col] = parseFloat(value);
-    setShearMatrix(newMatrix);
-  }; 
+  const handleInputChange = (e: any) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({ ...formData, 
+      [name]: type === 'checkbox' ? checked : value
 
-  // const handleCanvasClick = (event: React.MouseEvent) => {
-  //   const { offsetX, offsetY } = event.nativeEvent;
-  //   console.log(offsetX, offsetY);
-  //   const clickedPoint: [number, number] = [offsetX, offsetY];
+    });
+  };
 
-  //   drawnElements.forEach((element) => {
-  //     element.points.forEach((point) => {
-  //       if (Math.abs(point[0] - clickedPoint[0]) <= 5 && Math.abs(point[1] - clickedPoint[1]) <= 5) {
-  //         console.log('Elemento clicado:', element);
-  //       }
-  //     });
-  //   });
-  // }
+  const handleMatrixChange = (row: any, col: any, value: any) => {
+    const newMatrix = [...formData.shearMatrix];
+    newMatrix[row][col] = parseFloat(value) || 0;
+    setFormData({ ...formData, shearMatrix: newMatrix });
+  };
+
+  useEffect(() => {
+    const canvas = canvasPreviewRef.current;
+    if (canvas) {
+      const context = canvas.getContext('2d');
+      if (context) {
+        drawHouse(context);
+      }
+    }
+  }, [formData]);
+
 
   const handleColorModeChange = (mode: string) => {
     setColorMode(mode);
@@ -231,6 +263,69 @@ function App() {
       console.log('rgb color Array: ', rgbColor);
     }
   }
+
+  const applyTransformations = (point: [number, number, number]) => {
+    let [x, y, z] = point;
+    let transformedPoint = { x, y, z };
+
+    if(formData.scaleType === 'local') {
+       transformedPoint = scale(transformedPoint, formData.sx, formData.sy, formData.sz);
+    } else {
+      transformedPoint = scale(transformedPoint, formData.s, formData.s, formData.s);
+    }
+
+    if(formData.translateType) {
+      transformedPoint = translate(transformedPoint, formData.tx, formData.ty, formData.tz);
+    }
+
+    if(formData.rotateType === 'origem') {
+      transformedPoint = rotate(transformedPoint, formData.angle, formData.axis);
+    }
+
+    transformedPoint = shear(transformedPoint, formData.shearMatrix);
+
+    return transformedPoint;
+  }
+
+  const drawHouse = (context: CanvasRenderingContext2D) => {
+    const lines = lilhome();
+    
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+    context.beginPath();
+    lines.forEach(([[x0, y0, z0], [x1, y1, z1]]) => {
+      const pointTransformed0 = applyTransformations([x0, y0, z0]);
+      const pointTransformed1 = applyTransformations([x1, y1, z1]);
+      const [projX0, projY0] = projectPoint(pointTransformed0.x, pointTransformed0.y, pointTransformed0.z, context.canvas.width, context.canvas.height);
+      const [projX1, projY1] = projectPoint(pointTransformed1.x, pointTransformed1.y, pointTransformed1.z, context.canvas.width, context.canvas.height);
+      context.moveTo(projX0, projY0);
+      context.lineTo(projX1, projY1);
+    });
+    context.closePath();
+    context.fillStyle = '#000000';
+    context.stroke();    
+  };
+
+
+  const desenhar = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return; // Se não existir, sai da função
+  
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return; // Se o contexto não puder ser obtido, sai da função
+  
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+    let ponto = { x: 50, y: 50, z: 0 }; // Exemplo de ponto inicial
+    ponto = scale(ponto, formData.sx, formData.sy, formData.sz);
+    ponto = translate(ponto, formData.tx, formData.ty, formData.tz);
+    ponto = rotate(ponto, formData.angle, formData.axis);
+    ponto = shear(ponto, formData.shearMatrix);
+  
+    ctx.beginPath();
+    ctx.arc(ponto.x, ponto.y, 5, 0, 2 * Math.PI);
+    ctx.fill();
+  };
 
   return (
     <> 
@@ -391,42 +486,41 @@ function App() {
           </div>
         </div>
       </div>
-      <Modal 
-        show={openModal} 
-        onHide={() => setOpenModal(false)}
-        size="xl"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Configurando Casinha</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="row">
-            <div className="col-md-6">
-              <canvas id="previewCanvas" width={500} height={400} style={{border: '1px solid black'}}></canvas>
-            </div>
-            <div className="col-md-6">
-              <Form>
-                <Form.Group controlId="formScale">
-                  <Form.Label>Escala</Form.Label>
+      <Modal show={openModal} onHide={() => setOpenModal(false)} size="xl">
+      <Modal.Header closeButton>
+        <Modal.Title>Configurando Casinha</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="row">
+          <div className="col-md-6">
+              <canvas id="previewCanvas" width={500} height={400} style={{border: '1px solid black'}} ref={canvasPreviewRef}></canvas>
+          </div>
+          <div className="col-md-6">
+            <Form>
+              {/* Escala */}
+              <Form.Group controlId="formScale">
+                <Form.Label>Escala</Form.Label>
                   <div style={{display: 'flex', justifyContent: 'space-between'}}>
                     <Form.Check
                       type="radio"
                       label="Local"
                       name="scaleType"
-                      value="local"  
+                      value='local'
+                      checked={formData.scaleType === 'local'}
+                      onChange={handleInputChange}
                       style={{marginRight: '30px'}}                      
                     />
                     <InputGroup style={{marginRight: '15px'}}>
-                        <InputGroup.Text>X</InputGroup.Text>
-                      <Form.Control type="number" name="sx" />
-                    </InputGroup>
+                  <InputGroup.Text>X</InputGroup.Text>
+                      <Form.Control type="number" name="sx" value={formData.sx} onChange={handleInputChange} />
+                </InputGroup>
                     <InputGroup style={{marginRight: '15px'}}>
-                        <InputGroup.Text>Y</InputGroup.Text>
-                      <Form.Control type="number" name="sy" />
-                    </InputGroup>
-                    <InputGroup>
-                        <InputGroup.Text>Z</InputGroup.Text>
-                      <Form.Control type="number" name="sz" />
+                  <InputGroup.Text>Y</InputGroup.Text>
+                      <Form.Control type="number" name="sy" value={formData.sy} onChange={handleInputChange} />
+                </InputGroup>
+                <InputGroup>
+                  <InputGroup.Text>Z</InputGroup.Text>
+                      <Form.Control type="number" name="sz" value={formData.sz} onChange={handleInputChange} />
                     </InputGroup>
                   </div>
                   <div style={{display: 'flex', justifyContent: 'space-between'}}>
@@ -435,58 +529,63 @@ function App() {
                       label="Global"
                       name="scaleType"
                       value="global"
+                      checked={formData.scaleType === 'global'}
+                      onChange={handleInputChange}
                       style={{marginRight: '30px'}}
                     />
                     <InputGroup>
                         <InputGroup.Text> </InputGroup.Text>
-                      <Form.Control type="number" name="s" />
-                    </InputGroup>
+                      <Form.Control type="number" name="s" value={formData.s} onChange={handleInputChange} />
+                </InputGroup>
                   </div>
-                </Form.Group>
+              </Form.Group>
                 <hr />
-                <Form.Group controlId="formTranslate">
-                  <Form.Label>Translação</Form.Label>
+              <Form.Group controlId="formTranslate">
+                <Form.Label>Translação</Form.Label>
                   <div style={{display: 'flex', justifyContent: 'space-between'}}>
                     <Form.Check
                       type="checkbox"
-                      // label="Local"
                       name="translateType"
                       value="translate"  
+                      checked={formData.translateType}
+                      onChange={handleInputChange}
                       style={{marginRight: '30px'}}                      
                     />
                     <InputGroup style={{marginRight: '15px'}}>
-                        <InputGroup.Text>X</InputGroup.Text>
-                      <Form.Control type="number" name="sx" />
-                    </InputGroup>
+                  <InputGroup.Text>X</InputGroup.Text>
+                      <Form.Control type="number" name="tx" value={formData.tx} onChange={handleInputChange} />
+                </InputGroup>
                     <InputGroup style={{marginRight: '15px'}}>
-                        <InputGroup.Text>Y</InputGroup.Text>
-                      <Form.Control type="number" name="sy" />
-                    </InputGroup>
-                    <InputGroup>
-                        <InputGroup.Text>Z</InputGroup.Text>
-                      <Form.Control type="number" name="sz" />
-                    </InputGroup>
+                  <InputGroup.Text>Y</InputGroup.Text>
+                      <Form.Control type="number" name="ty" value={formData.ty} onChange={handleInputChange} />
+                </InputGroup>
+                <InputGroup>
+                  <InputGroup.Text>Z</InputGroup.Text>
+                      <Form.Control type="number" name="tz" value={formData.tz} onChange={handleInputChange} />
+                </InputGroup>
                   </div>
-                </Form.Group>
+              </Form.Group>
                 <hr />
-                <Form.Group controlId="formRotate">
-                  <Form.Label>Rotação</Form.Label>
+              <Form.Group controlId="formRotate">
+                <Form.Label>Rotação</Form.Label>
                   <div style={{display: 'flex', justifyContent: 'space-between'}}>
                     <Form.Check
                       type="radio"
                       label="Origem"
                       name="rotateType"
-                      value="origem"  
+                      value="origem"
+                      checked={formData.rotateType === 'origem'}
+                      onChange={handleInputChange}
                       style={{marginRight: '30px'}}                      
                     />
                     <InputGroup style={{marginRight: '15px'}}>
-                      <InputGroup.Text>Eixo</InputGroup.Text>
-                      <Form.Select>
-                        <option value="x">X</option>
-                        <option value="y">Y</option>
-                        <option value="z">Z</option>
-                      </Form.Select>
-                    </InputGroup>
+                  <InputGroup.Text>Eixo</InputGroup.Text>
+                  <Form.Select name="axis" value={formData.axis} onChange={handleInputChange}>
+                    <option value="x">X</option>
+                    <option value="y">Y</option>
+                    <option value="z">Z</option>
+                  </Form.Select>
+                </InputGroup>
                   </div>
                   <div style={{display: 'flex', justifyContent: 'space-between'}}>
                     <Form.Check
@@ -494,49 +593,45 @@ function App() {
                       label="Centro do Objeto"
                       name="rotateType"
                       value="origem"  
+                      checked={formData.rotateType === 'origem'}
+                      onChange={handleInputChange}
                       style={{marginRight: '30px'}}                      
                     />
                     <InputGroup style={{marginRight: '15px'}}>
-                      <InputGroup.Text>Graus</InputGroup.Text>
-                      <Form.Control type="number" name="angle" />
-                    </InputGroup>
+                  <InputGroup.Text>Graus</InputGroup.Text>
+                      <Form.Control type="number" name="angle" value={formData.angle} onChange={handleInputChange} />
+                </InputGroup>
                   </div>
-                </Form.Group>
+              </Form.Group>
                 <hr />
-                <Form.Group controlId="formShear">
-                  <Form.Label>Cisalhamento</Form.Label>
-                  <table>
-                    <tbody>
-                      {shearMatrix.map((row, rowIndex) => (
-                        <tr key={rowIndex}>
-                          {row.map((value, colIndex) => (
-                            <td key={colIndex}>
-                              <Form.Control 
-                                type="number" 
-                                value={value} 
+              <Form.Group controlId="formShear">
+                <Form.Label>Cisalhamento</Form.Label>
+                <table>
+                  <tbody>
+                      {formData.shearMatrix.map((row, rowIndex) => (
+                      <tr key={rowIndex}>
+                        {row.map((value, colIndex) => (
+                          <td key={colIndex}>
+                            <Form.Control
+                              type="number"
+                              value={value}
                                 onChange={(event) => handleMatrixChange(rowIndex, colIndex, event.target.value)}
-                                style={{ width: '50px', margin: '5px' }}
-                              />
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </Form.Group>
-              </Form>
-              </div>
+                                style={{ width: '75px', margin: '5px' }}
+                            />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Form.Group>
+            </Form>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setOpenModal(false)}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={() => setOpenModal(false)}>
-            Desenhar
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+      </Modal.Footer>
+    </Modal>
     </>
   );
 }
