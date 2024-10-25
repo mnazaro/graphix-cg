@@ -104,11 +104,6 @@
     margin: 0 1rem;
   }
 
-  label {
-    color: white;
-    font-size: 1.5rem;
-  }
-
   .color-picker {
     display: flex;
     justify-content: center;

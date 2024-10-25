@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import logo from './logo.svg';
 import './App.css';
+
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { 
+  Modal, 
+  Button, 
+  Form, 
+  InputGroup,
+  ToggleButton,
+  ToggleButtonGroup
+} from 'react-bootstrap';
 // import { bresenham } from './functions/bresenham';
 import { lilhome } from './functions/lilhome';
 
@@ -32,7 +41,7 @@ interface DrawnElement {
   id: number;
 }
 
-function App() { 
+function App() {
   const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
   const [tool, setTool] = useState<string>('');
   const [isDrawing, setIsDrawing] = useState(false);
@@ -44,6 +53,14 @@ function App() {
   const [lineWidth, setLineWidth] = useState(1);
   const [, setForceRender] = useState(0); 
 
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [shearMatrix, setShearMatrix] = useState([
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [0, 0, 1, 0],
+    [0, 0, 0, 1]
+  ])
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -79,28 +96,10 @@ function App() {
       console.log('linewidth: ', context.lineWidth);
     }
   };
-  // Problema: Estado inicial começa com RGB, e o código tenta extrair HSL de um objeto RGB
-  // Quero que 
-
-  // useEffect(() => {
-  //   console.log('colormode: ', colorMode)
-  //   if (colorMode === 'hsl') {
-  //     const { r, g, b } = color;
-  //     console.log('color object hsl: ', color);
-  //     const hslColor = rgbToHsl(r, g, b);
-  //     setColor(hslColor);
-  //     console.log('hsl color Array: ', hslColor);
-  //   } else {
-  //     const { h, s, l } = color;
-  //     console.log('color object rgb: ', color);
-  //     const rgbColor = hslToRgb(h, s, l);
-  //     setColor(rgbColor);
-  //     console.log('rgb color Array: ', rgbColor);
-  //   }
-  // }, [colorMode])
 
   const handleSetTool = (tool: string) => {
     setTool(tool);
+    setOpenMenuIndex(null);
     console.log(tool);
   }
 
@@ -188,6 +187,32 @@ function App() {
     context.closePath();
   };
 
+  const handleChangeSize = (value: number) => {
+    if(context) {
+      context.lineWidth += value;
+    }
+  }
+
+  const handleMatrixChange = (row: number, col: number, value: string) => {
+    const newMatrix = [...shearMatrix];
+    newMatrix[row][col] = parseFloat(value);
+    setShearMatrix(newMatrix);
+  }; 
+
+  // const handleCanvasClick = (event: React.MouseEvent) => {
+  //   const { offsetX, offsetY } = event.nativeEvent;
+  //   console.log(offsetX, offsetY);
+  //   const clickedPoint: [number, number] = [offsetX, offsetY];
+
+  //   drawnElements.forEach((element) => {
+  //     element.points.forEach((point) => {
+  //       if (Math.abs(point[0] - clickedPoint[0]) <= 5 && Math.abs(point[1] - clickedPoint[1]) <= 5) {
+  //         console.log('Elemento clicado:', element);
+  //       }
+  //     });
+  //   });
+  // }
+
   const handleColorModeChange = (mode: string) => {
     setColorMode(mode);
     console.log('colormode: ', colorMode)
@@ -212,18 +237,6 @@ function App() {
       <div className="body">
         <header className="header">
           <ul className='menu'>
-            <li onMouseLeave={() => setOpenMenuIndex(null)}>
-              <span onClick={() => setOpenMenuIndex(openMenuIndex === 0 ? null : 0)}>
-                Arquivo
-              </span>
-              {openMenuIndex === 0 && (
-                <ul className="submenu">
-                  <li>Novo</li>
-                  <li>Abrir</li>
-                  <li>Salvar</li>
-                </ul>
-              )}
-            </li>
             <li >
               <span onClick={() => setOpenMenuIndex(openMenuIndex === 1 ? null : 1)}>
                 Operações
@@ -245,40 +258,49 @@ function App() {
             <li className='plus-or-minus' onClick={increaseLineWidth}>+</li>
             <li className='current-size'>{context?.lineWidth}</li>
             <li className='plus-or-minus' onClick={decreaseLineWidth}>-</li>
-            <li className='plus-or-minus' onClick={handleClear}>Clear</li>
+            <li onClick={handleClear}>Clear</li>
+            <li onClick={() => setOpenModal(true)}>Casinha</li>
           </ul>
         </header>
-        <div className='paintboard'>
-              <canvas 
-                ref={canvasRef} 
-                width={800} 
-                height={600}
-                onMouseDown={startDrawing}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
-                onMouseMove={drawWhileMoving}
-              ></canvas>
-                <div>
-                <button 
-                  onClick={() => handleColorModeChange('rgb')}
-                  disabled={colorMode === 'rgb'}
-                >
-                  RGB
-                </button>
-                <button
-                  onClick={() => handleColorModeChange('hsl')}
-                  disabled={colorMode === 'hsl'}
-                >
-                  HSL
-                </button>
-                <div className='color-picker'>
-                  {colorMode === 'hsl' ? (
-                    <>
-                      <HslColorPicker color={color} onChange={(newColor) => setColor(newColor)} />
-                        <div className='color-input-container'>
-                        <label>
-                        H:
-                        <input
+        <div className="row">
+          <div className='paintboard col-md-12'>
+            <canvas 
+              ref={canvasRef} 
+              width={1000} 
+              height={500}
+              onMouseDown={startDrawing}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              onMouseMove={drawWhileMoving}
+            ></canvas>
+          </div>
+        </div>
+        <hr />
+        <div className="row">
+          <div className='color-picker col-md-12'>
+            <ToggleButtonGroup 
+              type="radio" name="colorMode" 
+              value={colorMode} onChange={handleColorModeChange}
+              >
+              <ToggleButton id="tbg-radio-1" value={'rgb'}>
+                RGB
+              </ToggleButton>
+              <ToggleButton id="tbg-radio-2" value={'hsl'}>
+                HSL
+              </ToggleButton>
+            </ToggleButtonGroup>
+            {colorMode === 'hsl' ? (
+              <>
+                <HslColorPicker 
+                  color={color} 
+                  onChange={(newColor) => setColor(newColor)} 
+                  style={{ width: '750px' }} 
+                  />
+                  <div className='color-input-container'>
+                    <Form.Group controlId="formColorH">
+                      <InputGroup style={{ width: '120px' }}>
+                        <InputGroup.Text>H</InputGroup.Text>
+                        <Form.Control
                           type="number"
                           value={color.h}
                           onChange={(e) => {
@@ -286,10 +308,12 @@ function App() {
                             setColor({ ...color, h: value });
                           }}
                         />
-                        </label>
-                        <label>
-                        S:
-                        <input
+                      </InputGroup>
+                    </Form.Group>
+                    <Form.Group controlId="formColorS">
+                      <InputGroup style={{ width: '120px' }}>
+                        <InputGroup.Text>S</InputGroup.Text>
+                        <Form.Control
                           type="number"
                           value={color.s}
                           onChange={(e) => {
@@ -297,10 +321,12 @@ function App() {
                             setColor({ ...color, s: value });
                           }}
                         />
-                        </label>
-                        <label>
-                        L:
-                        <input
+                      </InputGroup>
+                    </Form.Group>
+                    <Form.Group controlId="formColorL">
+                      <InputGroup style={{ width: '120px' }}>
+                        <InputGroup.Text>L</InputGroup.Text>
+                        <Form.Control
                           type="number"
                           value={color.l}
                           onChange={(e) => {
@@ -308,53 +334,209 @@ function App() {
                             setColor({ ...color, l: value });
                           }}
                         />
-                        </label>
-                        </div>
-                    </>
-                  ) : (
-                    <>
-                      <RgbColorPicker color={color} onChange={(newColor) => setColor(newColor)} />
-                      <div className='color-input-container'>
-                        <label>
-                        R:
-                        <input
-                          type="number"
-                          value={color.r}
-                          onChange={(e) => {
-                            const value = Math.max(0, Math.min(255, Number(e.target.value)));
-                            setColor({ ...color, r: value });
-                          }}
-                        />
-                        </label>
-                        <label>
-                        G:
-                        <input
-                          type="number"
-                          value={color.g}
-                          onChange={(e) => {
-                            const value = Math.max(0, Math.min(255, Number(e.target.value)));
-                            setColor({ ...color, g: value });
-                          }}
-                        />
-                        </label>
-                        <label>
-                        B:
-                        <input
-                          type="number"
-                          value={color.b}
-                          onChange={(e) => {
-                            const value = Math.max(0, Math.min(255, Number(e.target.value)));
-                            setColor({ ...color, b: value });
-                          }}
-                        />
-                        </label>
-                      </div>
-                    </>
-                  )}
+                      </InputGroup>
+                    </Form.Group>
+                  </div>
+              </>
+            ) : (
+              <>
+                <RgbColorPicker 
+                  color={color} 
+                  onChange={(newColor) => setColor(newColor)} 
+                  style={{ width: '750px' }}
+                />
+                <div className='color-input-container'>
+                  <Form.Group controlId="formColorR">
+                    <InputGroup style={{ width: '120px' }}>
+                      <InputGroup.Text>R</InputGroup.Text>
+                      <Form.Control
+                        type="number"
+                        value={color.r}
+                        onChange={(e) => {
+                          const value = Math.max(0, Math.min(255, Number(e.target.value)));
+                          setColor({ ...color, r: value });
+                        }}
+                      />
+                    </InputGroup>
+                  </Form.Group>
+                  <Form.Group controlId="formColorG">
+                    <InputGroup style={{ width: '120px' }}>
+                      <InputGroup.Text>G</InputGroup.Text>
+                      <Form.Control
+                        type="number"
+                        value={color.g}
+                        onChange={(e) => {
+                          const value = Math.max(0, Math.min(255, Number(e.target.value)));
+                          setColor({ ...color, g: value });
+                        }}
+                      />
+                    </InputGroup>
+                  </Form.Group>
+                  <Form.Group controlId="formColorB">
+                    <InputGroup style={{ width: '120px' }}>
+                      <InputGroup.Text>B</InputGroup.Text>
+                      <Form.Control
+                        type="number"
+                        value={color.b}
+                        onChange={(e) => {
+                          const value = Math.max(0, Math.min(255, Number(e.target.value)));
+                          setColor({ ...color, b: value });
+                        }}
+                      />
+                    </InputGroup>
+                  </Form.Group>
                 </div>
-              </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
+      <Modal 
+        show={openModal} 
+        onHide={() => setOpenModal(false)}
+        size="xl"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Configurando Casinha</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="row">
+            <div className="col-md-6">
+              <canvas id="previewCanvas" width={500} height={400} style={{border: '1px solid black'}}></canvas>
+            </div>
+            <div className="col-md-6">
+              <Form>
+                <Form.Group controlId="formScale">
+                  <Form.Label>Escala</Form.Label>
+                  <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                    <Form.Check
+                      type="radio"
+                      label="Local"
+                      name="scaleType"
+                      value="local"  
+                      style={{marginRight: '30px'}}                      
+                    />
+                    <InputGroup style={{marginRight: '15px'}}>
+                        <InputGroup.Text>X</InputGroup.Text>
+                      <Form.Control type="number" name="sx" />
+                    </InputGroup>
+                    <InputGroup style={{marginRight: '15px'}}>
+                        <InputGroup.Text>Y</InputGroup.Text>
+                      <Form.Control type="number" name="sy" />
+                    </InputGroup>
+                    <InputGroup>
+                        <InputGroup.Text>Z</InputGroup.Text>
+                      <Form.Control type="number" name="sz" />
+                    </InputGroup>
+                  </div>
+                  <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                    <Form.Check
+                      type="radio"
+                      label="Global"
+                      name="scaleType"
+                      value="global"
+                      style={{marginRight: '30px'}}
+                    />
+                    <InputGroup>
+                        <InputGroup.Text> </InputGroup.Text>
+                      <Form.Control type="number" name="s" />
+                    </InputGroup>
+                  </div>
+                </Form.Group>
+                <hr />
+                <Form.Group controlId="formTranslate">
+                  <Form.Label>Translação</Form.Label>
+                  <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                    <Form.Check
+                      type="checkbox"
+                      // label="Local"
+                      name="translateType"
+                      value="translate"  
+                      style={{marginRight: '30px'}}                      
+                    />
+                    <InputGroup style={{marginRight: '15px'}}>
+                        <InputGroup.Text>X</InputGroup.Text>
+                      <Form.Control type="number" name="sx" />
+                    </InputGroup>
+                    <InputGroup style={{marginRight: '15px'}}>
+                        <InputGroup.Text>Y</InputGroup.Text>
+                      <Form.Control type="number" name="sy" />
+                    </InputGroup>
+                    <InputGroup>
+                        <InputGroup.Text>Z</InputGroup.Text>
+                      <Form.Control type="number" name="sz" />
+                    </InputGroup>
+                  </div>
+                </Form.Group>
+                <hr />
+                <Form.Group controlId="formRotate">
+                  <Form.Label>Rotação</Form.Label>
+                  <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                    <Form.Check
+                      type="radio"
+                      label="Origem"
+                      name="rotateType"
+                      value="origem"  
+                      style={{marginRight: '30px'}}                      
+                    />
+                    <InputGroup style={{marginRight: '15px'}}>
+                      <InputGroup.Text>Eixo</InputGroup.Text>
+                      <Form.Select>
+                        <option value="x">X</option>
+                        <option value="y">Y</option>
+                        <option value="z">Z</option>
+                      </Form.Select>
+                    </InputGroup>
+                  </div>
+                  <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                    <Form.Check
+                      type="radio"
+                      label="Centro do Objeto"
+                      name="rotateType"
+                      value="origem"  
+                      style={{marginRight: '30px'}}                      
+                    />
+                    <InputGroup style={{marginRight: '15px'}}>
+                      <InputGroup.Text>Graus</InputGroup.Text>
+                      <Form.Control type="number" name="angle" />
+                    </InputGroup>
+                  </div>
+                </Form.Group>
+                <hr />
+                <Form.Group controlId="formShear">
+                  <Form.Label>Cisalhamento</Form.Label>
+                  <table>
+                    <tbody>
+                      {shearMatrix.map((row, rowIndex) => (
+                        <tr key={rowIndex}>
+                          {row.map((value, colIndex) => (
+                            <td key={colIndex}>
+                              <Form.Control 
+                                type="number" 
+                                value={value} 
+                                onChange={(event) => handleMatrixChange(rowIndex, colIndex, event.target.value)}
+                                style={{ width: '50px', margin: '5px' }}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Form.Group>
+              </Form>
+              </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setOpenModal(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={() => setOpenModal(false)}>
+            Desenhar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
