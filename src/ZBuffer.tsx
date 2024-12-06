@@ -300,48 +300,49 @@ const ZBuffer: React.FC = () => {
         <Container className="mt-4">
             <h1 className="text-center">Z-Buffer Practice</h1>
             <Row className="justify-content-center">
-                <canvas
-                    ref={canvasRef}
-                    width={800}
-                    height={800}
-                    style={{ border: '1px solid black' }}
-                ></canvas>
+                <Col>
+                    <canvas
+                        ref={canvasRef}
+                        width={800}
+                        height={800}
+                        style={{ border: '1px solid black' }}
+                    ></canvas>
+                </Col>
+                <Col className='align-self-center'>
+                    <Row className="mt-4">
+                        <Col>
+                            <Form.Label>Rotation X</Form.Label>
+                            <Form.Control
+                                type="range"
+                                min={0}
+                                max={2 * Math.PI}
+                                step={0.01}
+                                value={angleX}
+                                onChange={(e) => setAngleX(parseFloat(e.target.value))}
+                            />
+                            <Form.Label>Rotation Y</Form.Label>
+                            <Form.Control
+                                type="range"
+                                min={0}
+                                max={2 * Math.PI}
+                                step={0.01}
+                                value={angleY}
+                                onChange={(e) => setAngleY(parseFloat(e.target.value))}
+                            />
+                            <Form.Label>Rotation Z</Form.Label>
+                            <Form.Control
+                                type="range"
+                                min={0}
+                                max={2 * Math.PI}
+                                step={0.01}
+                                value={angleZ}
+                                onChange={(e) => setAngleZ(parseFloat(e.target.value))}
+                            />
+                        </Col>
+                    </Row>
+                </Col>
             </Row>
-            <Row className="mt-4">
-                <Col>
-                    <Form.Label>Rotation X</Form.Label>
-                    <Form.Control
-                        type="range"
-                        min={0}
-                        max={2 * Math.PI}
-                        step={0.01}
-                        value={angleX}
-                        onChange={(e) => setAngleX(parseFloat(e.target.value))}
-                    />
-                </Col>
-                <Col>
-                    <Form.Label>Rotation Y</Form.Label>
-                    <Form.Control
-                        type="range"
-                        min={0}
-                        max={2 * Math.PI}
-                        step={0.01}
-                        value={angleY}
-                        onChange={(e) => setAngleY(parseFloat(e.target.value))}
-                    />
-                </Col>
-                <Col>
-                    <Form.Label>Rotation Z</Form.Label>
-                    <Form.Control
-                        type="range"
-                        min={0}
-                        max={2 * Math.PI}
-                        step={0.01}
-                        value={angleZ}
-                        onChange={(e) => setAngleZ(parseFloat(e.target.value))}
-                    />
-                </Col>
-            </Row>
+            
         </Container>
     );
 };

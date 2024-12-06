@@ -186,72 +186,73 @@ const RotationalSweep: React.FC = () => {
     return (
         <Container className="mt-4">
             <h1 className="text-center">Rotational Sweep with Z-Buffer</h1>
-            <Row className="justify-content-center">
-                <canvas
-                    ref={canvasRef}
-                    width={500}
-                    height={500}
-                    style={{ border: '1px solid black', cursor: 'crosshair' }}
-                    onMouseDown={handleMouseDown}
-                    onMouseUp={handleMouseUp}
-                    onMouseMove={handleMouseMove}
-                ></canvas>
-            </Row>
-            <Row className="mt-4">
-                <Col>
-                    <Form.Label>
-                        Rotation X ({((angleX * 180) / Math.PI).toFixed(1)}°)
-                    </Form.Label>
-                    <Form.Control
-                        type="range"
-                        min={0}
-                        max={2 * Math.PI}
-                        step={0.01}
-                        value={angleX}
-                        onChange={(e) => setAngleX(parseFloat(e.target.value))}
-                    />
-                </Col>
-                <Col>
-                    <Form.Label>
-                        Rotation Y ({((angleY * 180) / Math.PI).toFixed(1)}°)
-                    </Form.Label>
-                    <Form.Control
-                        type="range"
-                        min={0}
-                        max={2 * Math.PI}
-                        step={0.01}
-                        value={angleY}
-                        onChange={(e) => setAngleY(parseFloat(e.target.value))}
-                    />
-                </Col>
-                <Col>
-                    <Form.Label>Segments</Form.Label>
-                    <Form.Control
-                        type="number"
-                        min={3}
-                        max={100}
-                        value={segments}
-                        onChange={(e) => {
-                            const value = parseInt(e.target.value);
-                            if (!isNaN(value) && value >= 3 && value <= 100) {
-                                setSegments(value);
-                            }
-                        }}
-                    />
-                </Col>
-                <Col className="d-flex align-items-end">
+            <Row>
+              <Col>
+                <Row className="justify-content-center">
+                    <canvas
+                        ref={canvasRef}
+                        width={500}
+                        height={500}
+                        style={{ border: '1px solid black', cursor: 'crosshair', height: '500px', width: '500px' }}
+                        onMouseDown={handleMouseDown}
+                        onMouseUp={handleMouseUp}
+                        onMouseMove={handleMouseMove}
+                    ></canvas>
+                </Row>
+              </Col>
+              <Col>
+                <Row className="mt-4">
+                    <Col>
+                        <Form.Label>
+                            Rotation X ({((angleX * 180) / Math.PI).toFixed(1)}°)
+                        </Form.Label>
+                        <Form.Control
+                            type="range"
+                            min={0}
+                            max={2 * Math.PI}
+                            step={0.01}
+                            value={angleX}
+                            onChange={(e) => setAngleX(parseFloat(e.target.value))}
+                        />
+                        <Form.Label>
+                            Rotation Y ({((angleY * 180) / Math.PI).toFixed(1)}°)
+                        </Form.Label>
+                        <Form.Control
+                            type="range"
+                            min={0}
+                            max={2 * Math.PI}
+                            step={0.01}
+                            value={angleY}
+                            onChange={(e) => setAngleY(parseFloat(e.target.value))}
+                        />
+                        <Form.Label>Segments</Form.Label>
+                        <Form.Control
+                            type="number"
+                            min={3}
+                            max={100}
+                            value={segments}
+                            onChange={(e) => {
+                                const value = parseInt(e.target.value);
+                                if (!isNaN(value) && value >= 3 && value <= 100) {
+                                    setSegments(value);
+                                }
+                            }}
+                        />
+                    </Col>
                     <Button
                         variant="danger"
                         onClick={clearCurve}
-                        className="me-2"
+                        className="me-2 mt-4"
                     >
                         Clear Curve
                     </Button>
-                    <Button variant="primary" onClick={saveImage}>
+                    <Button variant="primary" onClick={saveImage} className='mt-2'>
                         Save Image
                     </Button>
-                </Col>
+                </Row>
+              </Col>
             </Row>
+            
             <Row className="mt-4">
                 <Col>
                     <p>

@@ -12,10 +12,10 @@ import LightingExample from './LightingExample';
 const App: React.FC = () => {
     return (
         <Router>
-            <div className="header">
+            <div className="sidebar">
                 <ul>
                     <li>
-                        <Link to="/first">Primeira Implementação</Link>
+                        <Link to="/">Primeira Implementação</Link>
                     </li>
                     <li>
                         <Link to="/polygon-fill">
@@ -37,9 +37,10 @@ const App: React.FC = () => {
                         </Link>
                     </li>
                 </ul>
-
+            </div>
+            <div className="main-content">
                 <Routes>
-                    <Route path="/first" element={<Home />} />
+                    <Route path="/" element={<Home />} />
                     <Route path="/polygon-fill" element={<PolygonFill />} />
                     <Route path="/zbuffer" element={<ZBuffer />} />
                     <Route

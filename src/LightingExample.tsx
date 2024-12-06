@@ -321,54 +321,130 @@ const LightingExample: React.FC = () => {
         <Container className="mt-4">
             <h1 className="text-center">Iluminação com Z-Buffer</h1>
             <Row className="justify-content-center">
-                <canvas
-                    ref={canvasRef}
-                    width={500}
-                    height={500}
-                    style={{ border: '1px solid black' }}
-                ></canvas>
+                <Col>
+                    <canvas
+                        ref={canvasRef}
+                        width={500}
+                        height={500}
+                        style={{ border: '1px solid black',
+                                height: '100%',
+                                width: '100%'
+                        }}
+                    ></canvas>
+                </Col>
+                {/* Informações */}
+                <Col className='justify-content-between'>
+                    <Row>
+                        <h4>Informações</h4>
+                        <p>
+                            <strong>Observador:</strong> ({observer[0]},{' '}
+                            {observer[1]}, {observer[2]})
+                        </p>
+                        <p>
+                            <strong>Luz:</strong> ({light.position[0]},{' '}
+                            {light.position[1]}, {light.position[2]})
+                        </p>
+                        <p>
+                            <strong>Esfera:</strong> Centro = ({sphere.center[0]},{' '}
+                            {sphere.center[1]}, {sphere.center[2]}), Raio ={' '}
+                            {sphere.radius}
+                        </p>
+                        <p>
+                            <strong>Plano:</strong> Centro = ({plane.center[0]},{' '}
+                            {plane.center[1]}, {plane.center[2]}), Lado ={' '}
+                            {plane.size}
+                        </p>
+                    </Row>
+                    <Row>
+                        <h4>Rotação do Objeto</h4>
+                        <Form>
+                            <Form.Group className="mb-3">
+                                <Form.Label>
+                                    Rotação X (
+                                    {((angleX * 180) / Math.PI).toFixed(1)}°)
+                                </Form.Label>
+                                <Form.Control
+                                    as="input"
+                                    type="range"
+                                    min={0}
+                                    max={2 * Math.PI}
+                                    step={0.01}
+                                    value={angleX}
+                                    onChange={(e) =>
+                                        setAngleX(parseFloat(e.target.value))
+                                    }
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>
+                                    Rotação Y (
+                                    {((angleY * 180) / Math.PI).toFixed(1)}°)
+                                </Form.Label>
+                                <Form.Control
+                                    as="input"
+                                    type="range"
+                                    min={0}
+                                    max={2 * Math.PI}
+                                    step={0.01}
+                                    value={angleY}
+                                    onChange={(e) =>
+                                        setAngleY(parseFloat(e.target.value))
+                                    }
+                                />
+                            </Form.Group>
+                        </Form>
+                    </Row>
+                </Col>
             </Row>
             <Row className="mt-4">
                 {/* Controles de Iluminação */}
                 <Col md={4}>
                     <h4>Configurações de Iluminação</h4>
                     <Form>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Posição da Luz (X)</Form.Label>
-                            <Form.Control
-                                as="input" // Especifica que o Form.Control deve renderizar um input
-                                type="number"
-                                value={light.position[0]}
-                                onChange={(e: any) =>
-                                    handleLightChange(e, 'position')
-                                }
-                                name="0" // Índice para identificar o eixo
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Posição da Luz (Y)</Form.Label>
-                            <Form.Control
-                                as="input"
-                                type="number"
-                                value={light.position[1]}
-                                onChange={(e: any) =>
-                                    handleLightChange(e, 'position')
-                                }
-                                name="1"
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Posição da Luz (Z)</Form.Label>
-                            <Form.Control
-                                as="input"
-                                type="number"
-                                value={light.position[2]}
-                                onChange={(e: any) =>
-                                    handleLightChange(e, 'position')
-                                }
-                                name="2"
-                            />
-                        </Form.Group>
+                        <Row>
+                            <Col>    
+                                <Form.Group className="mb-3">
+                                    <Form.Label style={{textAlign: 'center'}}>Pos. da Luz (X)</Form.Label>
+                                    <Form.Control
+                                        as="input" // Especifica que o Form.Control deve renderizar um input
+                                        type="number"
+                                        value={light.position[0]}
+                                        onChange={(e: any) =>
+                                            handleLightChange(e, 'position')
+                                        }
+                                        name="0" // Índice para identificar o eixo
+                                    />
+                                </Form.Group>
+                            </Col>
+                            <Col>
+                                <Form.Group className="mb-3">
+                                    <Form.Label style={{textAlign: 'center'}}>Pos. da Luz (Y)</Form.Label>
+                                    <Form.Control
+                                        as="input"
+                                        type="number"
+                                        value={light.position[1]}
+                                        onChange={(e: any) =>
+                                            handleLightChange(e, 'position')
+                                        }
+                                        name="1"
+                                    />
+                                </Form.Group>                            
+                            </Col>
+                            <Col>
+                                <Form.Group className="mb-3">
+                                    <Form.Label style={{textAlign: 'center'}}>Pos. da Luz (Z)</Form.Label>
+                                    <Form.Control
+                                        as="input"
+                                        type="number"
+                                        value={light.position[2]}
+                                        onChange={(e: any) =>
+                                            handleLightChange(e, 'position')
+                                        }
+                                        name="2"
+                                    />
+                                </Form.Group>                            
+                            </Col>
+                        </Row>
                         <Form.Group className="mb-3">
                             <Form.Label>Intensidade Ambiental (Ia)</Form.Label>
                             <Form.Control
@@ -544,67 +620,10 @@ const LightingExample: React.FC = () => {
             <Row className="mt-4">
                 {/* Controles de Rotação */}
                 <Col md={6}>
-                    <h4>Rotação do Objeto</h4>
-                    <Form>
-                        <Form.Group className="mb-3">
-                            <Form.Label>
-                                Rotação X (
-                                {((angleX * 180) / Math.PI).toFixed(1)}°)
-                            </Form.Label>
-                            <Form.Control
-                                as="input"
-                                type="range"
-                                min={0}
-                                max={2 * Math.PI}
-                                step={0.01}
-                                value={angleX}
-                                onChange={(e) =>
-                                    setAngleX(parseFloat(e.target.value))
-                                }
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>
-                                Rotação Y (
-                                {((angleY * 180) / Math.PI).toFixed(1)}°)
-                            </Form.Label>
-                            <Form.Control
-                                as="input"
-                                type="range"
-                                min={0}
-                                max={2 * Math.PI}
-                                step={0.01}
-                                value={angleY}
-                                onChange={(e) =>
-                                    setAngleY(parseFloat(e.target.value))
-                                }
-                            />
-                        </Form.Group>
-                    </Form>
+                    
                 </Col>
 
-                {/* Informações */}
-                <Col md={6}>
-                    <h4>Informações</h4>
-                    <p>
-                        <strong>Observador:</strong> ({observer[0]},{' '}
-                        {observer[1]}, {observer[2]})
-                    </p>
-                    <p>
-                        <strong>Luz:</strong> ({light.position[0]},{' '}
-                        {light.position[1]}, {light.position[2]})
-                    </p>
-                    <p>
-                        <strong>Esfera:</strong> Centro = ({sphere.center[0]},{' '}
-                        {sphere.center[1]}, {sphere.center[2]}), Raio ={' '}
-                        {sphere.radius}
-                    </p>
-                    <p>
-                        <strong>Plano:</strong> Centro = ({plane.center[0]},{' '}
-                        {plane.center[1]}, {plane.center[2]}), Lado ={' '}
-                        {plane.size}
-                    </p>
-                </Col>
+                
             </Row>
         </Container>
     );

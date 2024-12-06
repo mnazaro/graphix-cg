@@ -1,8 +1,8 @@
 
 .body {
     background-color: #333333;
-    width: 100vw;
-    height: 100vh;
+    width: 86.3233vw;
+    height: 98.4vh;
 }
 
 .header {
@@ -123,3 +123,40 @@
     background-color: transparent; /* Remove o fundo */
     color: inherit; /* Mantém a cor original do texto */
   }
+
+  /* Estilos para a barra lateral */
+.sidebar {
+  height: 100%;
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  padding-top: 20px;
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  padding: 8px;
+  text-align: center;
+}
+
+.sidebar ul li a {
+  color: white;
+  text-decoration: none;
+  display: block;
+}
+
+.sidebar ul li a:hover {
+  background-color: #575757;
+}
+
+/* Estilos para o conteúdo principal */
+.main-content {
+  margin-left: 250px; /* Largura da barra lateral + 10px de margem */
+  /* padding: 20px; */
+}

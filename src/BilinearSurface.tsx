@@ -144,12 +144,15 @@ const BilinearSurface: React.FC = () => {
     return (
         <Container className="mt-4">
             <h1 className="text-center">Bilinear Surface with Z-Buffer</h1>
-            <Row className="justify-content-center">
+            <Row className="justify-content-center p-0">
                 <canvas
                     ref={canvasRef}
                     width={500}
                     height={500}
-                    style={{ border: '1px solid black' }}
+                    style={{ border: '1px solid black',
+                            height: '500px',
+                            width: '500px'
+                     }}
                 ></canvas>
             </Row>
             <Row className="mt-4">
@@ -165,8 +168,6 @@ const BilinearSurface: React.FC = () => {
                         value={angleX}
                         onChange={(e) => setAngleX(parseFloat(e.target.value))}
                     />
-                </Col>
-                <Col>
                     <Form.Label>
                         Rotation Y ({((angleY * 180) / Math.PI).toFixed(1)}°)
                     </Form.Label>
@@ -178,8 +179,6 @@ const BilinearSurface: React.FC = () => {
                         value={angleY}
                         onChange={(e) => setAngleY(parseFloat(e.target.value))}
                     />
-                </Col>
-                <Col>
                     <Form.Label>
                         Rotation Z ({((angleZ * 180) / Math.PI).toFixed(1)}°)
                     </Form.Label>
@@ -191,8 +190,6 @@ const BilinearSurface: React.FC = () => {
                         value={angleZ}
                         onChange={(e) => setAngleZ(parseFloat(e.target.value))}
                     />
-                </Col>
-                <Col>
                     <Form.Label>Resolution</Form.Label>
                     <Form.Control
                         type="number"
